@@ -148,14 +148,17 @@ e_{\text{cg}} \\
 \frac{2c_f}{m} \\
 0 \\
 \frac{2l_f \cdot c_f}{I_z}
-\end{bmatrix}\delta
+\end{bmatrix}
+\delta
 +
 \begin{bmatrix}
 0 \\
 \frac{2l_r \cdot c_r - 2l_f \cdot c_f}{m \cdot v_x} - v_x \\
 0 \\
 -\frac{2l_f^2 \cdot c_f + 2l_r^2 \cdot c_r}{I_z \cdot v_x}
-\end{bmatrix}r(s)
+\end{bmatrix}
+r(s)
 $$
+
 
 The linearized dynamic model in path coordinates is now ready for control application.
