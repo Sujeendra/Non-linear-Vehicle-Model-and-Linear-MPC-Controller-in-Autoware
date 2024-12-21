@@ -1,123 +1,86 @@
-# Non-linear Vehicle Model and Linear MPC Controller in Autoware
+# Abstract
 
-## Overview
-This project involves the development and analysis of a non-linear vehicle model and a Model Predictive Control (MPC) framework implemented within the **Autoware** autonomous driving platform. The primary focus is on dynamic modeling, control system design, and simulation analysis for precise lateral control in autonomous vehicles.
+This report presents the evaluation and comparison of linear and non-linear vehicle models within the Autoware framework for Model Predictive Control (MPC) in autonomous vehicles. The primary focus is on lateral control and trajectory tracking performance under various dynamic conditions. Both models were tested for their ability to handle lane changes, circular path navigation, and steering responses. The results show that the non-linear model outperforms the linear model, especially in terms of real-world vehicle dynamics, such as tire forces and slip angles. The non-linear MPC controller demonstrates superior resilience to disturbances and system uncertainties, making it more applicable for autonomous vehicle systems. The findings highlight the importance of simulating realistic vehicle dynamics to ensure the robustness and efficiency of control systems in dynamic and unstructured environments.
 
-## Abstract
-This report presents the development and analysis of a non-linear vehicle model and a Model Predictive Control (MPC) framework implemented within the **Autoware** autonomous driving platform. The study focuses on dynamic modeling, control system design, and simulation analysis to achieve precise lateral control in autonomous vehicles.
 
-The vehicle dynamics are represented by two complementary models. A non-linear vehicle model, incorporating tire forces and slip angles, is implemented on the simulation side to mimic real-world nonlinearities. For the controller, a linearized state-space model derived from the vehicle dynamics is used, enabling the design of an MPC framework suitable for real-time applications.
+# Simulation Results and Analysis
 
-The MPC controller employs bilinear discretization to ensure dynamic feasibility while minimizing a quadratic cost function for trajectory tracking and control effort. Simulations are conducted to analyze the interaction between the non-linear simulation model and the linearized control system, highlighting the importance of accurate modeling for robust control design in autonomous driving scenarios.
+The simulation results aim to evaluate the performance of the system under various conditions using both linear and non-linear vehicle models. These results provide insights into the vehicle's lateral dynamics, trajectory tracking, and steering responses, emphasizing the accuracy and stability of the control system. Each subsection focuses on specific aspects of the vehicle's behavior during the simulation.
 
-## Dynamic Modeling
-This section presents the mathematical formulations for the linear and non-linear vehicle models utilized in the project.
+## Map Overview
 
-![Dynamic Model](dynamic_model.png)
+The simulation environment, shown in Figure 7, includes scenarios that involve both lane changes and navigating around a circular path. These diverse scenarios are used to evaluate the control system’s ability to handle complex driving tasks. 
 
-The equation of motion considering forces in the lateral direction is given as:
+![Map](map.png)
+*Figure 7: Map*
 
-$$
-F_{yf} \cos(\delta) - F_{xf} \sin(\delta) + F_{yr} = m (\dot{v}_y + v_x r)
-$$
+The layout tests the vehicle's trajectory-following capability and dynamic stability as it adapts to various turns and maneuvers, providing a comprehensive assessment of the control system's performance under different driving conditions.
 
-Considering motion in the plane, a center of gravity (C.G.) along the centerline of the vehicle, and yaw inertia \( I_z \), the yaw moment balance gives:
+## Lateral Error and Curvature
 
-$$
-\ell_f (F_{yf} \cos(\delta)) - \ell_r (F_{yr} - F_{xf} \sin(\delta)) = I_z \dot{r}
-$$
+Figure 8 shows the lateral error (\(e_{\text{cg}}\)) and curvature values over time. This plot illustrates the tracking performance and curvature adherence of the vehicle during simulation. As we can see, as the curvature changes from \(\kappa=0\) to non-zero values, the error increases and the maximum error reaches 0.7m. However, the control system remains robust, quickly correcting the vehicle’s trajectory and bringing it back on track within a fraction of a second as the curvature changes.
 
-where \( r \) is the angular rate about the yaw axis.
+![Lateral Error and Curvature](lateral_error.png)
+*Figure 8: Lateral error and curvature over time.*
 
-Without the constraint on lateral slip, the slip angles of the tires are given as:
+## Trajectory Tracking and Error Metrics
 
-$$
-\alpha_f = \tan^{-1} \left( \frac{v_y + \ell_f r}{v_x} \right) - \delta, \quad
-\alpha_r = \tan^{-1} \left( \frac{v_y - \ell_r r}{v_x} \right).
-$$
+Figure 9 compares the vehicle's planned trajectory with its actual pose. The error is most noticeable at the curve entry and exit points. The motion planning algorithm generates the trajectory from the start to the goal pose, while the odometry sensor provides the vehicle's position in the Frenet frame. This data is plotted on the same graph to highlight the path deviation during the simulation.
 
-Modeling the force generated by the wheels as linearly proportional to the slip angle, the lateral forces are defined as:
+![Trajectory Tracking](trajectory.png)
+*Figure 9: Trajectory tracking and error metrics.*
 
-$$
-F_{yf} = -2c_f \alpha_f, \quad
-F_{yr} = -2c_r \alpha_r
-$$
+## Lateral Error Velocity and Heading Metrics
 
-Assuming a constant longitudinal velocity, \( \dot{v}_x = 0 \), allows the simplification:
+Figures 10, 11, and 12 show the lateral error velocity (\(\dot{e_{\text{cg}}}\)), heading error (\(\theta_{\text{e}}\)), and heading error velocity (\(\dot{\theta_{\text{e}}}\)) over time. These values are derived from the state equations used in the model. As observed, the absolute heading error reaches a maximum of 0.3 radians, primarily during the curve entry and exit phases, which is a typical scenario in trajectory tracking.
 
-$$
-F_{xf} = 0
-$$
+![Lateral Error Velocity](lateral_error_velocity.png)
+*Figure 10: Lateral error velocity over time.*
 
-Substituting Eqs. (5) and (6) into Eqs. (1) and (2), and solving for \( \dot{v}_y \) and \( \dot{r} \), we get:
+![Heading Error](heading_error.png)
+*Figure 11: Heading error over time.*
 
-$$
-\dot{v}_y = \frac{-2c_f \left[\tan^{-1} \left( \frac{v_y + \ell_f r}{v_x} \right) - \delta\right] \cos(\delta) - 2c_r \tan^{-1} \left( \frac{v_y - \ell_r r}{v_x} \right)}{m} - v_x r
-$$
+![Heading Error Velocity](heading_error_velocity.png)
+*Figure 12: Heading error velocity over time.*
 
-$$
-\dot{r} = \frac{-\ell_f c_f \left[\tan^{-1} \left( \frac{v_y + \ell_f r}{v_x} \right)-\delta\right] \cos(\delta) + \ell_r c_r \tan^{-1} \left( \frac{v_y - \ell_r r}{v_x} \right)}{I_z}
-$$
+## Tire Angle Comparison
 
-This gives the **dynamic bicycle model**.
+The comparison of tire angle response between the linear and non-linear vehicle models, shown in Figure 13, reveals that while the time delay between tire angles is minimal in both models, the non-linear model exhibits more steering noise. This results in less smooth steering compared to the linear model, which shows a more stable response with fewer fluctuations.
 
-Key parameters include:
-- **Tire Cornering Stiffness (\(c_f, c_r\))**: Front and Rear tire cornering stiffness.
-- **Vehicle Mass and Inertia (\(m, I_z\))**: Distributed between front and rear axles.
-- **Wheelbase (\(l_f, l_r\))**: Distance from Center of gravity to axles.
-- **Steer (\(\delta\))**: Steering angle.
-- **Slip Angles (\(\alpha_f,\alpha_r\))**: Front and rear slip angles respectively.
-- **Velocities (\(\mathbf{v}_y, \mathbf{v}_x\))**: Lateral and Longitudinal Velocities.
-- **Tire Forces (\(\mathbf{F}_{yf}, \mathbf{F}_{yr}\))**: Front and Rear tire forces.
+![Tire Angle Comparison](tire_angle.png)
+*Figure 13: Comparison of tire angles between linear and non-linear models.*
 
-### Linearized Dynamic Bicycle Model
-To apply linear control methods to the dynamic bicycle model, the model must be linearized. Applying small-angle assumptions to Eqs. (8) and (9) gives:
+# Conclusion
 
-$$
-\dot{v}_y = \frac{-2c_f v_y - 2c_f \ell_f r}{m v_x} + \frac{2c_f \delta}{m} + \frac{-2c_r v_y + 2c_r \ell_r r}{m v_x} - v_x r
-$$
+This report demonstrates the implementation and evaluation of both linear and non-linear vehicle models for Model Predictive Control (MPC) within the Autoware platform, with a focus on lateral control for autonomous vehicles. The key findings include:
 
-$$
-\dot{r} = \frac{-2\ell_f c_f v_y - 2\ell_f^2 c_f r }{I_z v_x} + \frac{2\ell_f c_f \delta}{I_z} + \frac{2\ell_r c_r v_y - 2\ell_r^2 c_r r}{I_z v_x}
-$$
+- **Superior Performance of Non-Linear Model:** The non-linear model consistently outperformed the linear model, especially in handling dynamic vehicle behaviors, such as tire forces and slip angles, resulting in more accurate trajectory tracking.
+- **MPC Robustness:** Both linear and non-linear MPC controllers demonstrated robustness to disturbances and system uncertainties, although the non-linear MPC showed superior resilience in more complex scenarios.
+- **Real-World Applicability:** The non-linear model's ability to closely simulate real-world vehicle dynamics makes it more suitable for deployment in autonomous driving systems, where handling real-world complexities is essential.
 
-Collecting terms, the linearized equations become:
+In future work, additional research into adaptive MPC controllers and further tuning of the vehicle dynamics could enhance the robustness and efficiency of the control system, particularly in highly dynamic or unstructured environments.
 
-$$
-\dot{v}_y = \frac{-(2c_f + 2c_r)}{m v_x} v_y + \left[\frac{2l_rc_r-2l_fc_f}{mv_x}-v_x \right]r + \frac{2c_f}{m} \delta
-$$
+# References
 
-$$
-\dot{r} = \frac{2\ell_r c_r - 2\ell_f c_f}{I_z v_x} v_y + \frac{-(2\ell_f^2 c_f + 2\ell_r^2 c_r)}{I_z v_x} r + \frac{2\ell_f c_f}{I_z} \delta
-$$
+1. Jeon, W., Chakrabarty, A., Zemouche, A., & Rajamani, R. (2021). Simultaneous state estimation and tire model learning for autonomous vehicle applications. *IEEE/ASME Transactions on Mechatronics*, 26(4), 1941-1950.
+2. Snider, J. M. (2009). Automatic steering methods for autonomous automobile path tracking. Robotics Institute, Pittsburgh, PA, Tech. Rep. CMU-RITR-09-08.
+3. Funke, J., Brown, M., Erlien, S. M., & Gerdes, J. C. (2016). Collision avoidance and stabilization for autonomous vehicles in emergency scenarios. *IEEE Transactions on Control Systems Technology*, 25(4), 1204-1216.
+4. [Autoware Control Design](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/control/)
+5. [Autoware Vehicle Model](https://autowarefoundation.github.io/autoware-documentation/main/how-to-guides/integrating-autoware/creating-vehicle-and-sensor-model/creating-vehicle-model/)
 
-This represents the **linearized dynamic bicycle model**.
+# Appendix: ROS, Autoware, and Vehicle Simulation Details
 
-### Linear Vehicle Model in Path Coordinates
-![Dynamic Model in Path Coordinates](path-coordinates.png)
+## ROS and Autoware Integration
 
-As with the kinematic bicycle model, it is useful to express the dynamic bicycle model with respect to the path.  
-With the constant longitudinal velocity assumption, the yaw rate derived from the path \( r(s) \) is defined as:
+Robot Operating System (ROS) serves as the backbone for Autoware, providing the middleware needed for efficient communication between various components of an autonomous vehicle system. Autoware utilizes ROS to handle tasks such as message passing, sensor integration, and modular development of software packages. By leveraging ROS, Autoware can seamlessly connect perception, planning, and control modules.
 
-$$
-r(s) = \kappa(s) v_x
-$$
+## RViz and Vehicle Coordinates in Simulation
 
-The path-derived lateral acceleration \( \dot{v}_y(s) \) follows as:
+RViz is a visualization tool within ROS that allows users to interactively view data from the autonomous vehicle in both real-time and simulation environments. In the context of Autoware, RViz is used to display the vehicle's trajectory, sensor data, and pose in a simulated or real-world coordinate frame. This visualization provides critical insights into the vehicle's behavior and its planned trajectory.
 
-$$
-\dot{v}_y(s) = \kappa(s) v_x^2
-$$
+Vehicle coordinates within RViz are derived from the state provided by the non-linear vehicle model and the planned trajectory. The following equations demonstrate how the coordinates \(X\) and \(Y\) are calculated.
 
-Letting \( e_{\text{cg}} \) be the orthogonal distance of the C.G. to the path, we have:
+## Coordinate Calculation
 
-$$
-\ddot{e}_{\text{cg}} = (\dot{v}_y + v_x r) - \dot{v}_y(s)
-= \dot{v}_y + v_x (r - r(s))
-= \dot{v}_y + v_x \dot{\theta}_e
-$$
-
-$$
-\dot{e}_{\text{cg}} = v_y + v_x \sin(\theta_e)
-$$
+The desired trajectory \(X_{\text{des}}\) and \(Y_{\text{des}}\) are computed from the path planning module, which provides a time-dependent trajectory. The equations below outline how the actual coordinates \(X\) and \(Y\) are determined using the non-linear vehicle model's output:
 
