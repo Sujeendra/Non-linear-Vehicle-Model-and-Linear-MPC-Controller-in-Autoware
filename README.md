@@ -4,7 +4,7 @@
 This project involves the development and analysis of a non-linear vehicle model and a Model Predictive Control (MPC) framework implemented within the **Autoware** autonomous driving platform. The primary focus is on dynamic modeling, control system design, and simulation analysis for precise lateral control in autonomous vehicles.
 
 ## Abstract
-This report presents the development and analysis of a non-linear vehicle model and a Model Predictive Control MPC (Model Predictive Control) framework implemented within the **Autoware** autonomous driving platform. The study focuses on dynamic modeling, control system design, and simulation analysis to achieve precise lateral control in autonomous vehicles.
+This report presents the development and analysis of a non-linear vehicle model and a Model Predictive Control (MPC) framework implemented within the **Autoware** autonomous driving platform. The study focuses on dynamic modeling, control system design, and simulation analysis to achieve precise lateral control in autonomous vehicles.
 
 The vehicle dynamics are represented by two complementary models. A non-linear vehicle model, incorporating tire forces and slip angles, is implemented on the simulation side to mimic real-world nonlinearities. For the controller, a linearized state-space model derived from the vehicle dynamics is used, enabling the design of an MPC framework suitable for real-time applications.
 
